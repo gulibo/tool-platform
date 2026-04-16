@@ -1028,7 +1028,7 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
         }
         
         const data = await response.json();
-        return data.data[0];
+        return data.data && data.data.length > 0 ? data.data[0] : null;
     },
     
     // 文件转Base64
