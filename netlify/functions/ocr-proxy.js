@@ -53,7 +53,7 @@ async function processFileWithGLM(file, apiKey, extractType) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'glm-4v',
+        model: 'glm-4.6v-flash',
         messages: [{
           role: 'user',
           content: [
