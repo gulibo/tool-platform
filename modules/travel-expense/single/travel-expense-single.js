@@ -347,16 +347,7 @@
                     <p>${TOOL_CONFIG.description}</p>
                 </div>
 
-                <!-- OCR状态显示（管理员控制，用户不可修改） -->
-                <div class="ocr-status-section" id="ocrStatusSection" style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 20px;">🔒</span>
-                        <div>
-                            <strong>OCR识别引擎：</strong><span id="ocrEngineName">加载中...</span>
-                            <span style="color: #666; font-size: 12px; margin-left: 10px;">（由管理员配置）</span>
-                        </div>
-                    </div>
-                </div>
+
 
                 <div class="upload-section" id="uploadSection">
                     <div class="upload-icon">📁</div>
@@ -487,11 +478,6 @@
                 });
             } catch (err) {
                 console.error('加载核心模块失败:', err);
-                const engineName = document.getElementById('ocrEngineName');
-                if (engineName) {
-                    engineName.textContent = '核心模块加载失败';
-                    engineName.style.color = '#dc3545';
-                }
                 return;
             }
         }
@@ -499,39 +485,10 @@
         // 加载管理员配置
         try {
             await TravelExpenseCore.loadAdminConfig();
-                
-                // 显示当前使用的OCR引擎
-                const engineName = document.getElementById('ocrEngineName');
-                if (engineName) {
-                    const provider = TravelExpenseCore.ocrConfig.provider;
-                    console.log('当前OCR提供商:', provider);
-                    
-                    if (provider === 'huawei') {
-                        engineName.textContent = '华为云OCR（高精度）';
-                        engineName.style.color = '#4caf50';
-                    } else {
-                        engineName.textContent = '本地Tesseract（免费）';
-                        engineName.style.color = '#ff9800';
-                    }
-                } else {
-                    console.warn('未找到ocrEngineName元素');
-                }
-                
-                console.log('当前OCR配置:', {
-                    provider: TravelExpenseCore.ocrConfig.provider,
-                    hasAK: !!TravelExpenseCore.ocrConfig.huawei.ak,
-                    hasSK: !!TravelExpenseCore.ocrConfig.huawei.sk,
-                    projectId: TravelExpenseCore.ocrConfig.huawei.projectId
-                });
-            } catch (err) {
-                console.error('加载OCR状态失败:', err);
-                // 显示错误状态
-                const engineName = document.getElementById('ocrEngineName');
-                if (engineName) {
-                    engineName.textContent = '配置加载失败';
-                    engineName.style.color = '#dc3545';
-                }
-            }
+            console.log('OCR配置加载完成');
+        } catch (err) {
+            console.error('加载OCR配置失败:', err);
+        }
     }
 
     // 处理文件

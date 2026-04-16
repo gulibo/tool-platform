@@ -2,7 +2,7 @@
  * 差旅费报销工具 - 核心处理逻辑
  * 功能：OCR识别、PDF解析、XML解析、信息提取、文件匹配、文档生成
  * 作者：AI Assistant
- * 版本：2.0.0 - 支持华为云OCR
+ * 版本：2.1.0 - 使用本地Tesseract OCR
  */
 
 (function() {
@@ -20,84 +20,14 @@
             extractedInfo: {} // 提取的关键信息
         },
         
-        // OCR配置 - 从StateManager加载管理员配置
+        // OCR配置 - 仅使用本地Tesseract
         ocrConfig: {
-            provider: 'tesseract',
-            huawei: {
-                endpoint: 'ocr.cn-north-4.myhuaweicloud.com',
-                ak: '',
-                sk: '',
-                projectId: ''
-            }
+            provider: 'tesseract'
         },
         
         // 加载管理员配置（从StateManager）
         loadAdminConfig: async function() {
-            try {
-                console.log('加载管理员OCR配置...');
-                console.log('StateManager是否存在:', typeof StateManager !== 'undefined');
-                
-                // 从StateManager获取OCR配置
-                if (typeof StateManager !== 'undefined' && StateManager.state) {
-                    // 强制从localStorage重新加载，确保获取最新配置
-                    const saved = localStorage.getItem('tool_platform_v7');
-                    if (saved) {
-                        try {
-                            const loadedState = JSON.parse(saved);
-                            if (loadedState.ocrConfig) {
-                                console.log('从localStorage直接读取OCR配置:', loadedState.ocrConfig);
-                                StateManager.state.ocrConfig = loadedState.ocrConfig;
-                            }
-                        } catch (e) {
-                            console.log('从localStorage读取失败:', e);
-                        }
-                    }
-                    
-                    const config = StateManager.get('ocrConfig');
-                    console.log('从StateManager获取到的OCR配置:', config);
-                    
-                    if (config && config.provider) {
-                        console.log('从StateManager加载到OCR配置:', config);
-                        
-                        this.ocrConfig.provider = config.provider;
-                        
-                        if (config.huawei) {
-                            this.ocrConfig.huawei = {
-                                ...this.ocrConfig.huawei,
-                                ...config.huawei
-                            };
-                        }
-                        console.log('OCR配置已加载，提供商:', this.ocrConfig.provider);
-                        console.log('华为云配置:', {
-                            hasAK: !!this.ocrConfig.huawei.ak,
-                            hasSK: !!this.ocrConfig.huawei.sk,
-                            projectId: this.ocrConfig.huawei.projectId,
-                            accountType: this.ocrConfig.huawei.accountType
-                        });
-                        return;
-                    } else {
-                        console.log('StateManager中没有OCR配置，尝试从配置文件加载...');
-                    }
-                } else {
-                    console.log('StateManager未定义，尝试从配置文件加载...');
-                }
-                
-                // 备用：从配置文件加载
-                try {
-                    const response = await fetch('./modules/travel-expense/config/ocr-config.json');
-                    if (response.ok) {
-                        const config = await response.json();
-                        console.log('从配置文件加载到OCR配置:', config);
-                        
-                        if (config.provider) {
-                            this.ocrConfig.provider = config.provider;
-                        }
-                        if (config.huawei) {
-                            this.ocrConfig.huawei = {
-                                ...this.ocrConfig.huawei,
-                                ...config.huawei
-                            };
-                        }
+            console.log('OCR配置：使用本地Tesseract');
                         console.log('OCR配置已加载，提供商:', this.ocrConfig.provider);
                     } else {
                         console.log('配置文件不存在，使用默认配置(tesseract)');
@@ -145,26 +75,8 @@
         
         // 初始化OCR
         initOCR: async function() {
-            console.log('开始初始化OCR，提供商:', this.ocrConfig.provider);
-            
-            if (this.ocrConfig.provider === 'tesseract') {
-                // 本地Tesseract OCR
-                await this.initTesseractWorker();
-            } else if (this.ocrConfig.provider === 'huawei') {
-                // 华为云OCR - 检查配置
-                if (!this.ocrConfig.huawei.ak || !this.ocrConfig.huawei.sk) {
-                    console.warn('华为云OCR未配置AK/SK，将使用Tesseract作为备选');
-                    this.ocrConfig.provider = 'tesseract';
-                    await this.initTesseractWorker();
-                }
-                // 华为云OCR模式下也预初始化Tesseract作为备选
-                else {
-                    console.log('华为云OCR模式下预初始化Tesseract作为备选...');
-                    this.initTesseractWorker().catch(err => {
-                        console.log('Tesseract备选初始化失败（非关键）:', err.message);
-                    });
-                }
-            }
+            console.log('开始初始化OCR，使用本地Tesseract');
+            await this.initTesseractWorker();
         },
         
         // 动态加载脚本
@@ -336,33 +248,14 @@
             
             let text = '';
             
-            if (this.ocrConfig.provider === 'huawei' && this.ocrConfig.huawei.ak) {
-                // 使用华为云OCR
-                console.log('使用华为云OCR识别...');
-                try {
-                    text = await this.recognizeWithHuaweiOCR(file);
-                    console.log('华为云OCR识别成功');
-                } catch (error) {
-                    console.error('华为云OCR失败，切换到Tesseract:', error);
-                    // 失败后使用Tesseract - 确保Worker已初始化
-                    if (!this.tesseractWorker) {
-                        console.log('初始化Tesseract作为备选...');
-                        await this.initTesseractWorker();
-                    }
-                    const imageData = await this.fileToImageData(file);
-                    const result = await this.tesseractWorker.recognize(imageData);
-                    text = result.data.text;
-                }
-            } else {
-                // 使用本地Tesseract OCR
-                console.log('使用Tesseract OCR识别...');
-                if (!this.tesseractWorker) {
-                    await this.initTesseractWorker();
-                }
-                const imageData = await this.fileToImageData(file);
-                const result = await this.tesseractWorker.recognize(imageData);
-                text = result.data.text;
+            // 使用本地Tesseract OCR
+            console.log('使用Tesseract OCR识别...');
+            if (!this.tesseractWorker) {
+                await this.initTesseractWorker();
             }
+            const imageData = await this.fileToImageData(file);
+            const result = await this.tesseractWorker.recognize(imageData);
+            text = result.data.text;
             
             console.log('原始OCR识别结果:', text.substring(0, 200));
             
@@ -381,120 +274,6 @@
                     type: extractedData.type || imageType
                 }
             };
-        },
-        
-        // 华为云OCR识别
-        recognizeWithHuaweiOCR: async function(file) {
-            const config = this.ocrConfig.huawei;
-            
-            // 1. 获取Token
-            const token = await this.getHuaweiToken(config);
-            
-            // 2. 读取图片为Base64
-            const base64Image = await this.fileToBase64(file);
-            
-            // 3. 调用OCR API（使用代理服务器避免CORS）
-            const response = await fetch(`/api/huawei/ocr/${config.projectId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Auth-Token': token
-                },
-                body: JSON.stringify({
-                    image: base64Image
-                })
-            });
-            
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(`华为云OCR请求失败: ${JSON.stringify(error)}`);
-            }
-            
-            const result = await response.json();
-            
-            // 4. 提取文字
-            let text = '';
-            if (result.result && result.result.words_block_list) {
-                text = result.result.words_block_list.map(block => block.words).join('\n');
-            }
-            
-            return text;
-        },
-        
-        // 获取华为云Token - 使用代理服务器避免CORS
-        getHuaweiToken: async function(config) {
-            console.log('开始获取华为云Token...');
-            console.log('账号类型:', config.accountType || 'main');
-            
-            // 构建请求体
-            let requestBody;
-            
-            if (config.accountType === 'iam') {
-                // IAM用户密码认证（AK填IAM用户名，SK填密码）
-                requestBody = {
-                    auth: {
-                        identity: {
-                            methods: ['password'],
-                            password: {
-                                user: {
-                                    name: config.ak,  // IAM用户名
-                                    password: config.sk,  // IAM用户密码
-                                    domain: {
-                                        name: config.domain  // 主账号名
-                                    }
-                                }
-                            }
-                        },
-                        scope: {
-                            project: {
-                                id: config.projectId
-                            }
-                        }
-                    }
-                };
-            } else {
-                // 主账号访问密钥认证
-                requestBody = {
-                    auth: {
-                        identity: {
-                            methods: ['hw_access_key'],
-                            hw_access_key: {
-                                access: {
-                                    key: config.ak,
-                                    secret: config.sk
-                                }
-                            }
-                        },
-                        scope: {
-                            project: {
-                                id: config.projectId
-                            }
-                        }
-                    }
-                };
-            }
-            
-            console.log('请求Token，项目ID:', config.projectId);
-            
-            // 使用代理服务器避免CORS问题
-            const response = await fetch('/api/huawei/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('获取Token失败:', response.status, errorText);
-                throw new Error(`获取华为云Token失败: ${response.status} - ${errorText}`);
-            }
-            
-            const token = response.headers.get('X-Subject-Token');
-            console.log('成功获取Token:', token ? 'Token已获取' : 'Token为空');
-            return token;
         },
         
         // 文件转Base64
