@@ -1,4 +1,4 @@
-// 差旅费智能识别工具 - 大模型OCR + 信息提取填写
+// 差旅费智能识别工具 - 大模型OCR + 信息提取填写 (v1.1)
 // 注册到ToolPlatform
 
 ToolPlatform.registerTool('travel-expense-intelligent', {
