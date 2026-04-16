@@ -463,6 +463,9 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
                 <div class="tei-header">
                     <h2>📋 差旅费智能识别</h2>
                     <p>上传发票、支付记录、审批表等文件，自动识别提取关键信息并生成完整报销文档</p>
+                    <div class="tei-engine-info" style="margin-top: 10px; padding: 8px 16px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px; display: inline-block;">
+                        <span style="color: #52c41a; font-size: 13px;">🤖 OCR识别引擎：智谱GLM-4-Flash大模型</span>
+                    </div>
                 </div>
                 
                 <div class="tei-info-panel">
