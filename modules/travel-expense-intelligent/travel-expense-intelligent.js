@@ -1066,25 +1066,29 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
         const data = result.extractedData;
         console.log('Extracted data:', data);
         
-        // 根据数据内容自动分类
-        if (data.invoiceNumber || data.totalAmount) {
+        // 根据数据内容自动分类（支持中英文字段名）
+        const hasInvoiceData = data.invoiceNumber || data.totalAmount || data['发票号码'] || data['价税合计金额小写'];
+        const hasTrainTicket = data.isTrainTicket || data['是否为火车票'] || (data.trainInfo && data.trainInfo.departure) || (data['车次'] && data['出发站']);
+        const sellerName = data.sellerName || data['销售方名称'] || '';
+        
+        if (hasInvoiceData || hasTrainTicket) {
             // 判断是否为火车票
-            if (data.isTrainTicket || (data.trainInfo && data.trainInfo.departure)) {
+            if (hasTrainTicket) {
                 this.extractedData.trainTickets.push({
                     ...data,
                     fileName: result.fileName
                 });
-            } else if (data.sellerName && data.sellerName.includes('油') || data.sellerName && data.sellerName.includes('石化')) {
+            } else if (sellerName.includes('油') || sellerName.includes('石化') || sellerName.includes('加油')) {
                 this.extractedData.fuelInvoices.push({
                     ...data,
                     fileName: result.fileName
                 });
-            } else if (data.sellerName && (data.sellerName.includes('高速') || data.sellerName.includes('路桥'))) {
+            } else if (sellerName.includes('高速') || sellerName.includes('路桥') || sellerName.includes('通行费')) {
                 this.extractedData.tollInvoices.push({
                     ...data,
                     fileName: result.fileName
                 });
-            } else if (data.sellerName && (data.sellerName.includes('酒店') || data.sellerName.includes('宾馆') || data.sellerName.includes('住宿'))) {
+            } else if (sellerName.includes('酒店') || sellerName.includes('宾馆') || sellerName.includes('住宿')) {
                 this.extractedData.hotelInvoices.push({
                     ...data,
                     fileName: result.fileName
