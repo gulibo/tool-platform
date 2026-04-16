@@ -1097,22 +1097,26 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
             }
         }
         
-        if (data.paymentAmount && data.payee) {
+        // 支付记录（支持中英文字段名）
+        if (data.paymentAmount || data.payee || data['支付金额'] || data['收款方']) {
             this.extractedData.payments.push({
                 ...data,
                 fileName: result.fileName
             });
         }
         
-        if (data.caseName || data.caseLocation) {
+        // 案件信息（支持中英文字段名）
+        if (data.caseName || data.caseLocation || data['案件名称'] || data['办案地点']) {
             this.extractedData.caseInfo = { ...this.extractedData.caseInfo, ...data };
         }
         
-        if (data.travelers || data.destination) {
+        // 出差信息（支持中英文字段名）
+        if (data.travelers || data.destination || data['出差人'] || data['到达地']) {
             this.extractedData.travelInfo = { ...this.extractedData.travelInfo, ...data };
         }
         
-        if (data.plateNumber || data.vehicleInfo) {
+        // 租车信息（支持中英文字段名）
+        if (data.plateNumber || data.vehicleInfo || data['车牌号码'] || data['车辆信息']) {
             this.extractedData.carInfo = { ...this.extractedData.carInfo, ...data };
         }
     },
