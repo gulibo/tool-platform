@@ -1317,8 +1317,8 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
         const caseName = data.caseInfo.caseName || data.caseInfo['案件名称'] || '未识别';
         const caseLocation = data.caseInfo.caseLocation || data.caseInfo['办案地点'] || 
                             data.travelInfo.destination || data.travelInfo['到达地'] || '未识别';
-        const startDate = data.travelInfo.startDate || data.travelInfo['出差起始日期'] || '未识别';
-        const endDate = data.travelInfo.endDate || data.travelInfo['出差截止日期'] || '未识别';
+        const displayStartDate = data.travelInfo.startDate || data.travelInfo['出差起始日期'] || '未识别';
+        const displayEndDate = data.travelInfo.endDate || data.travelInfo['出差截止日期'] || '未识别';
         
         grid.innerHTML = `
             <div class="tei-info-item">
@@ -1335,7 +1335,7 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
             </div>
             <div class="tei-info-item">
                 <span class="tei-info-label">出差日期</span>
-                <span class="tei-info-value">${startDate} 至 ${endDate}</span>
+                <span class="tei-info-value">${displayStartDate} 至 ${displayEndDate}</span>
             </div>
             <div class="tei-info-item">
                 <span class="tei-info-label">高铁票总额</span>
