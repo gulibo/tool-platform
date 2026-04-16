@@ -969,10 +969,20 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
                 file.status = 'success';
                 file.extractedData = result;
                 this.categorizeExtractedData(result, file.category);
+                
+                // 添加延迟避免429错误
+                if (i < totalFiles - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
             } catch (error) {
                 console.error('Processing error:', error);
                 file.status = 'error';
                 file.error = error.message;
+                
+                // 出错后也添加延迟
+                if (i < totalFiles - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
             }
             
             this.renderFileList();
