@@ -732,9 +732,9 @@
 
             // 步骤5: 计算伙食补助费
             updateProgress(80, '正在计算伙食补助费...');
-            const totalPersons = appState.processedData.subsidy.persons;
+            const subsidyPersons = appState.processedData.subsidy.persons;
             const days = appState.processedData.subsidy.days;
-            appState.processedData.subsidy.total = totalPersons * days * 100;
+            appState.processedData.subsidy.total = subsidyPersons * days * 100;
             appState.processedData.grandTotal += appState.processedData.subsidy.total;
 
             // 步骤6: 生成文档
