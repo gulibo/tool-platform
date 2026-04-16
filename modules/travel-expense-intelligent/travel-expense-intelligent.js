@@ -1980,7 +1980,7 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
         if (isNaN(date.getTime())) return dateStr;
         return `${date.getMonth() + 1}.${date.getDate()}`;
     }
-};
+});
 
-// 全局访问 - Fixed v3
+// 全局访问 - Fixed v4
 window.TravelExpenseIntelligent = ToolPlatform.getToolConfig('travel-expense-intelligent');
