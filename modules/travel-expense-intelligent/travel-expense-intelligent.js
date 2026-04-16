@@ -9,7 +9,7 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
     author: 'AI Assistant',
     
     // 后端代理地址
-    apiEndpoint: '/api/ocr-proxy',
+    apiEndpoint: 'https://guibo-tool-platform.netlify.app/.netlify/functions/ocr-proxy',
     
     // 渲染工具界面
     render: function(container) {
