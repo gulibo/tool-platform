@@ -966,22 +966,38 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
             
             try {
                 const result = await this.processFile(file);
-                file.status = 'success';
-                file.extractedData = result;
-                this.categorizeExtractedData(result, file.category);
+                console.log('File processed:', file.name, 'Result:', result);
                 
-                // 添加延迟避免429错误
+                if (result && result.error) {
+                    // API返回了错误
+                    file.status = 'error';
+                    file.error = result.error;
+                    console.warn('API Error for', file.name, ':', result.error);
+                } else if (result && (result.extractedData || result.rawResponse)) {
+                    // 成功获取数据
+                    file.status = 'success';
+                    file.extractedData = result;
+                    this.categorizeExtractedData(result, file.category);
+                } else {
+                    // 没有数据也没有错误
+                    file.status = 'error';
+                    file.error = 'No data returned';
+                    console.warn('No data for', file.name);
+                }
+                
+                // 添加更长延迟避免429错误（2秒）
                 if (i < totalFiles - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    progressText.textContent = `等待API限流... (${i + 1}/${totalFiles})`;
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                 }
             } catch (error) {
                 console.error('Processing error:', error);
                 file.status = 'error';
-                file.error = error.message;
+                file.error = error.message || 'Unknown error';
                 
                 // 出错后也添加延迟
                 if (i < totalFiles - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                 }
             }
             
