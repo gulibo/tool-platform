@@ -1162,19 +1162,57 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
             });
         }
         
-        // 案件信息（支持中英文字段名）
+        // 案件信息（支持中英文字段名，统一转换为英文字段）
         if (data.caseName || data.caseLocation || data['案件名称'] || data['办案地点']) {
-            this.extractedData.caseInfo = { ...this.extractedData.caseInfo, ...data };
+            this.extractedData.caseInfo = { 
+                ...this.extractedData.caseInfo, 
+                ...data,
+                caseName: data.caseName || data['案件名称'] || this.extractedData.caseInfo.caseName,
+                caseLocation: data.caseLocation || data['办案地点'] || this.extractedData.caseInfo.caseLocation,
+                caseNumber: data.caseNumber || data['案件编号'] || this.extractedData.caseInfo.caseNumber
+            };
         }
         
-        // 出差信息（支持中英文字段名）
+        // 出差信息（支持中英文字段名，统一转换为英文字段）
         if (data.travelers || data.destination || data['出差人'] || data['到达地']) {
-            this.extractedData.travelInfo = { ...this.extractedData.travelInfo, ...data };
+            // 处理出差人字段（可能是字符串或数组）
+            let travelers = data.travelers || [];
+            if (data['出差人'] && typeof data['出差人'] === 'string') {
+                travelers = data['出差人'].split(/[,，、]/).filter(t => t.trim());
+            }
+            
+            this.extractedData.travelInfo = { 
+                ...this.extractedData.travelInfo, 
+                ...data,
+                travelers: travelers.length > 0 ? travelers : (this.extractedData.travelInfo.travelers || []),
+                externalPersonnel: data.externalPersonnel || data['行业外人员'] || this.extractedData.travelInfo.externalPersonnel,
+                destination: data.destination || data['到达地'] || this.extractedData.travelInfo.destination,
+                startDate: data.startDate || data['出差起始日期'] || this.extractedData.travelInfo.startDate,
+                endDate: data.endDate || data['出差截止日期'] || this.extractedData.travelInfo.endDate,
+                days: data.days || data['出差天数'] || this.extractedData.travelInfo.days,
+                transport: data.transport || data['交通工具'] || this.extractedData.travelInfo.transport,
+                approver: data.approver || data['审批人'] || this.extractedData.travelInfo.approver,
+                approvalDate: data.approvalDate || data['审批日期'] || this.extractedData.travelInfo.approvalDate
+            };
         }
         
-        // 租车信息（支持中英文字段名）
+        // 租车信息（支持中英文字段名，统一转换为英文字段）
         if (data.plateNumber || data.vehicleInfo || data['车牌号码'] || data['车辆信息']) {
-            this.extractedData.carInfo = { ...this.extractedData.carInfo, ...data };
+            this.extractedData.carInfo = { 
+                ...this.extractedData.carInfo, 
+                ...data,
+                plateNumber: data.plateNumber || data['车牌号码'] || this.extractedData.carInfo.plateNumber,
+                vehicleBrand: data.vehicleBrand || data['车辆品牌'] || this.extractedData.carInfo.vehicleBrand,
+                vehicleModel: data.vehicleModel || data['车辆型号'] || this.extractedData.carInfo.vehicleModel,
+                pickupTime: data.pickupTime || data['取车时间'] || this.extractedData.carInfo.pickupTime,
+                returnTime: data.returnTime || data['还车时间'] || this.extractedData.carInfo.returnTime,
+                rentalDays: data.rentalDays || data['租车天数'] || this.extractedData.carInfo.rentalDays,
+                totalCost: data.totalCost || data['费用总金额'] || this.extractedData.carInfo.totalCost,
+                rentalFee: data.rentalFee || data['租车费'] || this.extractedData.carInfo.rentalFee,
+                insuranceFee: data.insuranceFee || data['保险费'] || this.extractedData.carInfo.insuranceFee,
+                fuelFee: data.fuelFee || data['油费'] || this.extractedData.carInfo.fuelFee,
+                otherFees: data.otherFees || data['其他费用'] || this.extractedData.carInfo.otherFees
+            };
         }
     },
     
@@ -1235,17 +1273,29 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
         const carTotal = data.carInfo.totalCost ? parseFloat(data.carInfo.totalCost) : 0;
         
         // 计算伙食补助
-        const travelers = data.travelInfo.travelers || [];
-        const externalPersonnel = data.travelInfo.externalPersonnel || '';
+        let travelers = data.travelInfo.travelers || [];
+        // 兼容中文字段名
+        if (!travelers.length && data.travelInfo['出差人']) {
+            const travelerStr = data.travelInfo['出差人'];
+            travelers = typeof travelerStr === 'string' ? travelerStr.split(/[,，、]/).filter(t => t.trim()) : [travelerStr];
+        }
+        
+        const externalPersonnel = data.travelInfo.externalPersonnel || data.travelInfo['行业外人员'] || '';
         const allPersons = [...travelers];
-        if (externalPersonnel) allPersons.push(...externalPersonnel.split(/[,，、]/));
+        if (externalPersonnel && typeof externalPersonnel === 'string') {
+            allPersons.push(...externalPersonnel.split(/[,，、]/).filter(t => t.trim()));
+        }
         
         // 计算天数
         let days = 0;
-        if (data.travelInfo.startDate && data.travelInfo.endDate) {
-            const start = new Date(data.travelInfo.startDate);
-            const end = new Date(data.travelInfo.endDate);
+        const startDate = data.travelInfo.startDate || data.travelInfo['出差起始日期'];
+        const endDate = data.travelInfo.endDate || data.travelInfo['出差截止日期'];
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
             days = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1);
+        } else if (data.travelInfo.days || data.travelInfo['出差天数']) {
+            days = parseInt(data.travelInfo.days || data.travelInfo['出差天数']) || 0;
         }
         
         const mealSubsidyTotal = allPersons.length * days * 100;
@@ -1263,14 +1313,21 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
             personCount: allPersons.length
         };
         
+        // 获取字段值（兼容中英文）
+        const caseName = data.caseInfo.caseName || data.caseInfo['案件名称'] || '未识别';
+        const caseLocation = data.caseInfo.caseLocation || data.caseInfo['办案地点'] || 
+                            data.travelInfo.destination || data.travelInfo['到达地'] || '未识别';
+        const startDate = data.travelInfo.startDate || data.travelInfo['出差起始日期'] || '未识别';
+        const endDate = data.travelInfo.endDate || data.travelInfo['出差截止日期'] || '未识别';
+        
         grid.innerHTML = `
             <div class="tei-info-item">
                 <span class="tei-info-label">案件名称</span>
-                <span class="tei-info-value">${data.caseInfo.caseName || '未识别'}</span>
+                <span class="tei-info-value">${caseName}</span>
             </div>
             <div class="tei-info-item">
                 <span class="tei-info-label">办案地点</span>
-                <span class="tei-info-value">${data.caseInfo.caseLocation || data.travelInfo.destination || '未识别'}</span>
+                <span class="tei-info-value">${caseLocation}</span>
             </div>
             <div class="tei-info-item">
                 <span class="tei-info-label">出差人员</span>
@@ -1278,7 +1335,7 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
             </div>
             <div class="tei-info-item">
                 <span class="tei-info-label">出差日期</span>
-                <span class="tei-info-value">${data.travelInfo.startDate || '未识别'} 至 ${data.travelInfo.endDate || '未识别'}</span>
+                <span class="tei-info-value">${startDate} 至 ${endDate}</span>
             </div>
             <div class="tei-info-item">
                 <span class="tei-info-label">高铁票总额</span>
