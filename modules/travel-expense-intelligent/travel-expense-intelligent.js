@@ -1018,8 +1018,9 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
         }, 1500);
     },
     
-    // 处理单个文件
-    processFile: async function(file) {
+    // 处理单个文件（带重试机制）
+    processFile: async function(file, retryCount = 0) {
+        const maxRetries = 3;
         const base64Data = await this.fileToBase64(file.file);
         
         // 确定提取类型
@@ -1033,29 +1034,65 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
             extractType = 'invoice';
         }
         
-        // 调用后端代理
-        const response = await fetch(this.apiEndpoint || '/api/ocr-proxy', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                files: [{
-                    base64Data: base64Data,
-                    mimeType: file.type || 'application/octet-stream',
-                    fileName: file.name
-                }],
-                extractType: extractType
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('OCR request failed');
+        try {
+            // 调用后端代理
+            const response = await fetch(this.apiEndpoint || '/api/ocr-proxy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    files: [{
+                        base64Data: base64Data,
+                        mimeType: file.type || 'application/octet-stream',
+                        fileName: file.name
+                    }],
+                    extractType: extractType
+                })
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('OCR API HTTP Error:', response.status, errorText);
+                throw new Error(`OCR request failed: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('OCR API Response:', data);
+            
+            // 检查是否有错误
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // 检查结果数据
+            if (data.data && data.data.length > 0) {
+                const result = data.data[0];
+                // 如果API返回了错误，但HTTP状态是200
+                if (result.error) {
+                    // 如果是429错误且未达到最大重试次数，则重试
+                    if (result.error.includes('429') && retryCount < maxRetries) {
+                        console.log(`Rate limited, retrying ${retryCount + 1}/${maxRetries}...`);
+                        await new Promise(resolve => setTimeout(resolve, 5000)); // 等待5秒后重试
+                        return this.processFile(file, retryCount + 1);
+                    }
+                }
+                return result;
+            }
+            
+            return null;
+            
+        } catch (error) {
+            console.error('Process file error:', error);
+            // 如果是网络错误或429错误，且未达到最大重试次数，则重试
+            if (retryCount < maxRetries && 
+                (error.message.includes('429') || error.message.includes('network') || error.message.includes('fetch'))) {
+                console.log(`Error occurred, retrying ${retryCount + 1}/${maxRetries}...`);
+                await new Promise(resolve => setTimeout(resolve, 5000)); // 等待5秒后重试
+                return this.processFile(file, retryCount + 1);
+            }
+            throw error;
         }
-        
-        const data = await response.json();
-        console.log('OCR API Response:', data);
-        return data.data && data.data.length > 0 ? data.data[0] : null;
     },
     
     // 文件转Base64

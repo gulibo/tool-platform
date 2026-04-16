@@ -28,12 +28,17 @@ exports.handler = async (event, context) => {
     }
 
     const results = [];
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      console.log(`Processing file ${i + 1}/${files.length}: ${file.fileName}`);
+      
       const result = await processFileWithGLM(file, apiKey, extractType);
       results.push(result);
-      // 添加延迟避免429错误
-      if (files.length > 1) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 添加更长延迟避免429错误（3秒）
+      if (i < files.length - 1) {
+        console.log('Waiting 3s to avoid rate limit...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
 
