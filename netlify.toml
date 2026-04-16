@@ -1,9 +1,14 @@
 [build]
   functions = "netlify/functions"
+  publish = "."
 
 [functions]
   node_bundler = "esbuild"
 
-# 告诉 Netlify 只部署函数，不部署静态文件
 [build.environment]
   NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
