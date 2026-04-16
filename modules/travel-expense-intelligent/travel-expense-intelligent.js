@@ -1028,6 +1028,7 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
         }
         
         const data = await response.json();
+        console.log('OCR API Response:', data);
         return data.data && data.data.length > 0 ? data.data[0] : null;
     },
     
@@ -1046,9 +1047,14 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
     
     // 分类提取的数据
     categorizeExtractedData: function(result, category) {
-        if (!result || !result.extractedData) return;
+        console.log('Categorizing result:', result);
+        if (!result || !result.extractedData) {
+            console.warn('No extractedData found in result');
+            return;
+        }
         
         const data = result.extractedData;
+        console.log('Extracted data:', data);
         
         // 根据数据内容自动分类
         if (data.invoiceNumber || data.totalAmount) {
