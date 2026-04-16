@@ -1,0 +1,22 @@
+{
+  "_comment": "OCR配置文件 - 仅管理员可修改此文件",
+  "provider": "tesseract",
+  "huawei": {
+    "endpoint": "ocr.cn-north-4.myhuaweicloud.com",
+    "ak": "",
+    "sk": "",
+    "projectId": ""
+  },
+  "_instructions": {
+    "provider": "可选值: tesseract(本地免费) | huawei(华为云高精度)",
+    "huawei_setup": [
+      "1. 访问 https://www.huaweicloud.com/product/ocr.html 开通OCR服务",
+      "2. 在控制台获取AK/SK: 右上角用户名 -> 我的凭证 -> 访问密钥",
+      "3. 获取项目ID: 我的凭证 -> 项目列表 -> 华北-北京四(cn-north-4)",
+      "4. 将AK、SK、项目ID填入上方对应字段",
+      "5. 将provider改为'huawei'",
+      "6. 保存文件后刷新页面"
+    ],
+    "security_warning": "⚠️ 此文件包含敏感信息(SK)，请勿上传到GitHub或分享给他人"
+  }
+}

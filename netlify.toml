@@ -1,0 +1,9 @@
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# 告诉 Netlify 只部署函数，不部署静态文件
+[build.environment]
+  NODE_VERSION = "18"

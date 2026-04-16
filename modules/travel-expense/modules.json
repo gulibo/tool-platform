@@ -1,0 +1,90 @@
+{
+  "modules": [
+    {
+      "id": "travel-expense-single",
+      "name": "差旅费报销工具（单接口版）",
+      "version": "1.0.0",
+      "description": "上传所有文件，自动识别分类，生成完整报销文档",
+      "author": "AI Assistant",
+      "icon": "📄",
+      "category": "财务工具",
+      "entry": "single/travel-expense-single.js",
+      "enabled": true,
+      "permissions": ["file-upload", "file-download"],
+      "dependencies": [],
+      "config": {
+        "maxFileSize": 10485760,
+        "allowedFormats": ["pdf", "xml", "jpg", "jpeg", "png"],
+        "ocrEnabled": true,
+        "autoClassify": true
+      }
+    },
+    {
+      "id": "travel-expense-multi",
+      "name": "差旅费报销工具（多接口版）",
+      "version": "1.0.0",
+      "description": "分类上传文件，自动识别，生成完整报销文档",
+      "author": "AI Assistant",
+      "icon": "📑",
+      "category": "财务工具",
+      "entry": "multi/travel-expense-multi.js",
+      "enabled": true,
+      "permissions": ["file-upload", "file-download"],
+      "dependencies": [],
+      "config": {
+        "maxFileSize": 10485760,
+        "allowedFormats": ["pdf", "xml", "jpg", "jpeg", "png"],
+        "categories": [
+          {
+            "id": "accommodation",
+            "name": "住宿费",
+            "icon": "🏨",
+            "accept": ".pdf,.xml,.jpg,.jpeg,.png"
+          },
+          {
+            "id": "fuel",
+            "name": "燃油费",
+            "icon": "⛽",
+            "accept": ".pdf,.xml,.jpg,.jpeg,.png"
+          },
+          {
+            "id": "rental",
+            "name": "租车费",
+            "icon": "🚗",
+            "accept": ".pdf,.xml,.jpg,.jpeg,.png"
+          },
+          {
+            "id": "toll",
+            "name": "过路费",
+            "icon": "🛣️",
+            "accept": ".pdf,.xml,.jpg,.jpeg,.png"
+          },
+          {
+            "id": "train",
+            "name": "高铁/火车票",
+            "icon": "🚄",
+            "accept": ".pdf,.xml,.jpg,.jpeg,.png"
+          },
+          {
+            "id": "approval",
+            "name": "审批表",
+            "icon": "📋",
+            "accept": ".pdf,.jpg,.jpeg,.png"
+          },
+          {
+            "id": "case",
+            "name": "立案报告",
+            "icon": "📄",
+            "accept": ".pdf"
+          },
+          {
+            "id": "settlement",
+            "name": "结算单",
+            "icon": "📊",
+            "accept": ".pdf,.jpg,.jpeg,.png"
+          }
+        ]
+      }
+    }
+  ]
+}

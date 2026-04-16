@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内部工具平台 - 模块化版</title>
+    <!-- 引入核心库 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+    <style>
+        :root { 
+            --primary-color: #0066ff; 
+            --bg-color: #f5f7fa; 
+            --card-bg: #ffffff; 
+            --text-color: #333333; 
+            --secondary-text: #666666; 
+            --border-radius: 12px; 
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+            --success-color: #52c41a; 
+            --danger-color: #ff4d4f; 
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        .container { width: 100%; max-width: 1000px; padding: 20px; text-align: center; }
+        
+        /* 登录卡片 */
+        .login-card { background: var(--card-bg); padding: 40px; border-radius: var(--border-radius); box-shadow: var(--shadow); width: 100%; max-width: 400px; margin: 0 auto; }
+        .login-header h1 { font-size: 24px; color: var(--primary-color); margin-bottom: 10px; }
+        .tab-switch { display: flex; background: #f0f2f5; border-radius: 8px; padding: 4px; margin-bottom: 24px; }
+        .tab-btn { flex: 1; border: none; padding: 10px; border-radius: 6px; background: transparent; cursor: pointer; transition: 0.3s; font-weight: 500; }
+        .tab-btn.active { background: white; color: var(--primary-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 15px; margin-bottom: 15px; outline: none; transition: border-color 0.3s; }
+        input:focus { border-color: var(--primary-color); }
+        .btn { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.3s; font-weight: 600; }
+        .btn:hover { background: #0052cc; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-gray { background: #f0f2f5; color: #666; margin-top: 10px; }
+        .btn-gray:hover { background: #e4e6e9; }
+        
+        /* 仪表盘 */
+        .dashboard { display: none; width: 100%; min-height: 600px; background: var(--card-bg); border-radius: var(--border-radius); box-shadow: var(--shadow); padding: 30px; text-align: left; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+        .dash-header h2 { font-size: 22px; color: var(--primary-color); }
+        .btn-logout { padding: 8px 16px; border: 1px solid #d9d9d9; background: white; border-radius: 6px; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        .btn-logout:hover { color: var(--danger-color); border-color: var(--danger-color); }
+        
+        .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .tool-item { padding: 25px; background: #f8fbff; border: 1px solid #e1e8f5; border-radius: 12px; cursor: pointer; text-align: left; transition: 0.3s; position: relative; overflow: hidden; }
+        .tool-item:hover { transform: translateY(-5px); border-color: var(--primary-color); box-shadow: 0 5px 15px rgba(0,102,255,0.1); }
+        .tool-item .icon { font-size: 32px; display: block; margin-bottom: 12px; }
+        .tool-item .title { font-size: 18px; font-weight: bold; display: block; margin-bottom: 8px; color: var(--primary-color); }
+        .tool-item .desc { font-size: 13px; color: #666; line-height: 1.6; border-top: 1px solid #eee; padding-top: 12px; }
+        
+        /* 管理员面板 */
+        .admin-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .admin-nav-item { padding: 10px 20px; cursor: pointer; border-radius: 6px; font-size: 14px; color: var(--secondary-text); }
+        .admin-nav-item.active { background: var(--primary-color); color: white; font-weight: bold; }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+        
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .admin-table th, .admin-table td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; text-align: left; }
+        .admin-table td:nth-child(3) { max-width: 200px; word-wrap: break-word; }
+        .admin-table th { background: #fafafa; font-weight: 600; color: #666; }
+        
+        .status-tag { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-on { background: #f6ffed; color: var(--success-color); border: 1px solid #b7eb8f; }
+        .status-off { background: #fff1f0; color: var(--danger-color); border: 1px solid #ffa39e; }
+        
+        .action-link { color: var(--primary-color); cursor: pointer; margin-right: 15px; font-size: 13px; text-decoration: none; }
+        .action-link:hover { text-decoration: underline; }
+        .action-link.danger { color: var(--danger-color); }
+        
+        /* 弹窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .close-modal { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 24px; color: #999; line-height: 1; }
+        
+        .desc-box { background: #f0f7ff; padding: 15px; border-radius: 8px; font-size: 13px; color: #555; margin-bottom: 20px; border-left: 4px solid var(--primary-color); line-height: 1.6; }
+        
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; font-weight: bold; color: var(--primary-color); }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .log-container { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: "Consolas", monospace; font-size: 12px; max-height: 400px; overflow-y: auto; line-height: 1.5; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .log-time { color: #569cd6; margin-right: 10px; }
+        .log-user { color: #ce9178; margin-right: 10px; font-weight: bold; }
+        
+        /* 模块加载状态 */
+        .module-loading { text-align: center; padding: 40px; color: #999; }
+        .module-loading .spinner { margin: 0 auto 20px; }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loadingText">正在加载模块...</div>
+    </div>
+
+    <div class="container">
+        <!-- 登录视图 -->
+        <div id="loginView" class="login-card">
+            <div class="login-header">
+                <h1>内部工具平台</h1>
+                <p style="color: #999; font-size: 14px; margin-bottom: 20px;">稽查业务自动化中心 - 模块化版</p>
+            </div>
+            <div class="tab-switch">
+                <button id="tabUser" class="tab-btn active" onclick="Auth.setRole('user')">用户入口</button>
+                <button id="tabAdmin" class="tab-btn" onclick="Auth.setRole('admin')">管理员入口</button>
+            </div>
+            <div class="input-group" style="text-align: left;">
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">请输入访问密码</label>
+                <input type="password" id="passwordInput" placeholder="访问密码">
+            </div>
+            <div id="loginError" style="color: var(--danger-color); font-size: 12px; margin-bottom: 15px; display: none;">密码错误，请重新输入</div>
+            <button class="btn" onclick="Auth.login()">登 录</button>
+        </div>
+
+        <!-- 仪表盘 -->
+        <div id="dashboardView" class="dashboard">
+            <div class="dash-header">
+                <h2 id="dashTitle">内部工具平台</h2>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span id="currentUserRole" style="font-size: 13px; color: #666; background: #eee; padding: 4px 10px; border-radius: 4px;"></span>
+                    <button class="btn-logout" onclick="Auth.logout()">退出登录</button>
+                </div>
+            </div>
+            
+            <!-- 动态内容区域 -->
+            <div id="dynamicContent">
+                <!-- 由模块动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 运行工具弹窗 -->
+    <div id="runModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="UI.closeModal('runModal')">&times;</span>
+            <div class="modal-header">
+                <h3 id="runToolName">工具运行</h3>
+            </div>
+            <div id="runModalBody">
+                <!-- 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑/分类弹窗 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="UI.closeModal('editModal')">&times;</span>
+            <div class="modal-header">
+                <h3 id="editModalTitle">编辑信息</h3>
+            </div>
+            <div id="editModalBody">
+                <!-- 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心模块加载 -->
+    <script src="core/core-engine.js"></script>
+    <script src="core/state-manager.js"></script>
+    <script src="core/auth.js"></script>
+    <script src="core/ui.js"></script>
+    <script src="core/tool-loader.js"></script>
+    <script src="core/gist-sync.js"></script>
+    <script src="core/admin.js"></script>
+    <script src="core/user.js"></script>
+    <script src="core/app.js"></script>
+    
+    <script>
+        // 全局错误处理
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('Global error:', msg, 'at', url, 'line', line, 'col', col);
+            alert('JavaScript错误: ' + msg + '\n文件: ' + url + '\n行号: ' + line);
+            return false;
+        };
+        
+        // 初始化应用
+        window.onload = function() {
+            console.log('Window loaded, starting App.init()...');
+            App.init().then(() => {
+                console.log('App.init() completed successfully');
+            }).catch(err => {
+                console.error('App.init() failed:', err);
+                alert('应用初始化失败: ' + err.message);
+            });
+        };
+    </script>
+</body>
+</html>

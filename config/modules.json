@@ -1,0 +1,42 @@
+{
+    "modules": [
+        {
+            "id": "travel-expense-single",
+            "name": "差旅费报销工具（单接口版）",
+            "version": "1.0.0",
+            "description": "上传所有文件，自动识别分类，生成完整报销文档",
+            "author": "AI Assistant",
+            "icon": "📄",
+            "category": "财务工具",
+            "entry": "./modules/travel-expense/single/travel-expense-single.js",
+            "enabled": true,
+            "permissions": ["file-upload", "file-download"]
+        },
+        {
+            "id": "travel-expense-multi",
+            "name": "差旅费报销工具（多接口版）",
+            "version": "1.0.0",
+            "description": "分类上传文件，自动识别，生成完整报销文档",
+            "author": "AI Assistant",
+            "icon": "📑",
+            "category": "财务工具",
+            "entry": "./modules/travel-expense/multi/travel-expense-multi.js",
+            "enabled": true,
+            "permissions": ["file-upload", "file-download"]
+        },
+        {
+            "id": "travel-expense-intelligent",
+            "name": "差旅费智能识别",
+            "version": "1.0.0",
+            "description": "上传发票、支付记录、审批表等文件，自动识别提取关键信息并生成完整报销文档",
+            "author": "AI Assistant",
+            "icon": "📋",
+            "category": "财务工具",
+            "entry": "./modules/travel-expense-intelligent/travel-expense-intelligent.js",
+            "enabled": true,
+            "permissions": ["file-upload", "file-download"]
+        }
+    ],
+    "version": "1.0.0",
+    "description": "GitHub仓库模块配置，在此添加需要动态加载的模块名称"
+}
