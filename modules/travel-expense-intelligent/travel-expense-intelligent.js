@@ -1979,5 +1979,5 @@ ToolPlatform.registerTool('travel-expense-intelligent', {
     }
 };
 
-// 全局访问 - Updated
+// 全局访问 - Fixed v2
 window.TravelExpenseIntelligent = ToolPlatform.getToolConfig('travel-expense-intelligent');
